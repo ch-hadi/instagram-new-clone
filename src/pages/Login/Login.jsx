@@ -1,76 +1,220 @@
-// src/pages/Login.js
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { Form, Input, Button, Checkbox, Tabs } from 'antd';
+import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import TabPane from 'antd/es/tabs/TabPane';
+import apiRequest from '../../utils/axiosIntercepter/apiClient';
 
 const Login = () => {
-    const { login } = useAuth();
-    const [email, setEmail] = React.useState('');
-    const [password, setPassword] = React.useState('');
-    const navigate = useNavigate();
-    const handleLogin = (e) => {
-        e.preventDefault();
-        const userData = { email, name: 'User' }; // Mock user data, replace with real API response
-        login(userData);
-        navigate('/dashboard');
-    };
+  const navigate = useNavigate();
+  const [error, setError] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [isLogin, setIsLogin] = React.useState(true);
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="flex w-full max-w-4xl rounded-lg shadow-lg overflow-hidden">
+  const [loginForm, setLoginForm] = React.useState({
+    email: '',
+    password: '',
+  });
 
-                {/* Left Container (Form Section) */}
-                <div className="w-full lg:w-1/2 p-8 bg-white">
-                    <h2 className="text-3xl font-semibold text-center text-gray-700 mb-6">Login</h2>
+  const [signupForm, setSignupForm] = React.useState({
+    name: '',
+    email: '',
+    password: '',
+  });
 
-                    <form onSubmit={handleLogin} className="bg-white p-6 rounded shadow-md w-full">
-                        <div className="mb-4">
-                            <label className="block text-gray-700">Email Address</label>
-                            <input
-                                type="email"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Enter your email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
+  const handleLoginChange = (e) => {
+    setLoginForm({
+      ...loginForm,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-                        <div className="mb-4">
-                            <label className="block text-gray-700">Password</label>
-                            <input
-                                type="password"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Enter your password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
+  const handleSignupChange = (e) => {
+    setSignupForm({
+      ...signupForm,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center">
-                                <input type="checkbox" id="remember" className="mr-2" />
-                                <label htmlFor="remember" className="text-gray-700">Remember me</label>
-                            </div>
-                            <a href="/" className="text-blue-500">Forgot Password?</a>
-                        </div>
+  const onFinishLogin = async () => {
+    setLoading(true);
+    setError(null);
+    console.log('first',loginForm)
+    try {
+      const response = await apiRequest('POST','auth/login', loginForm);
 
-                        <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300">
-                            Login
-                        </button>
-                    </form>
+      console.log('Login successful', response.data);
+    //   localStorage.setItem('token', response.data.token);
+    //   navigate('/dashboard');
+    } catch (err) {
+        console.log('err',err)
+      if (err.response && err.response.status === 404) {
+        setError('Invalid credentials. Please try again.');
+      } else {
+        setError('An unexpected error occurred. Please try again later.');
+      }
+    } 
+    finally {
+      setLoading(false);
+    }
+  };
 
-                    <p className="mt-6 text-center text-gray-700">
-                        Don't have an account? <Link to="/signup" className="text-blue-500">Sign Up</Link>
-                    </p>
-                </div>
+  const onFinishSignup = async () => {
+    
+    try {
+      const response = await apiRequest('POST', '/users/register', signupForm);
+      console.log('Signup successful', response.data);
+      localStorage.setItem('token', response.data.token);
+      navigate('/dashboard');
+    } catch (err) {
+        console.log('err',err)
+      if (err.response && err.response.status === 409) {
+        setError(err.response.data.message);
+      } else {
+        setError('An unexpected error occurred. Please try again later.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                {/* Right Container (Image Section) */}
-                <div className="hidden lg:block lg:w-1/2 bg-cover bg-center" style={{ backgroundImage: "url('https://source.unsplash.com/random')" }}>
-                </div>
-            </div>
+  console.log(loginForm)
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', background: '#f0f2f5' }}>
+      <div style={{ display: 'flex', maxWidth: '100%', background: '#fff', boxShadow: '0 0 15px rgba(0,0,0,0.1)' }}>
+        <div style={{ flex: 1, background: '#000842', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img
+            src="https://readymadeui.com/signin-image.webp"
+            alt="login"
+            style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
+          />
         </div>
-    );
+        <div style={{ flex: 1, padding: '40px' }}>
+          <Tabs defaultActiveKey="1" onChange={(key) => setIsLogin(key === '1')}>
+            <TabPane tab="Login" key="1">
+              <Form
+                name="login"
+                initialValues={{ remember: true }}
+                onFinish={onFinishLogin}
+                layout="vertical"
+              >
+                <Form.Item
+                  name="email"
+                  label="Email"
+                  rules={[{ required: true, message: 'Please input your email!' }]}
+                >
+                  <Input
+                    prefix={<UserOutlined />}
+                    placeholder="Email"
+                    name="email"
+                    value={loginForm.email}
+                    onChange={handleLoginChange}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="password"
+                  label="Password"
+                  rules={[{ required: true, message: 'Please input your password!' }]}
+                >
+                  <Input.Password
+                    prefix={<LockOutlined />}
+                    placeholder="Password"
+                    name="password"
+                    value={loginForm.password}
+                    onChange={handleLoginChange}
+                  />
+                </Form.Item>
+
+                <Form.Item>
+                  <Checkbox name="remember">Remember me</Checkbox>
+                </Form.Item>
+
+                {error && (
+                  <Form.Item>
+                    <p style={{ color: 'red' }}>{error}</p>
+                  </Form.Item>
+                )}
+
+                <Form.Item>
+                  <Button type="primary" htmlType="submit" block loading={loading}>
+                    Log in
+                  </Button>
+                </Form.Item>
+
+                <Form.Item>
+                  <a href="#">Forgot password?</a>
+                </Form.Item>
+              </Form>
+            </TabPane>
+            <TabPane tab="Sign Up" key="2">
+              <Form
+                name="signup"
+                initialValues={{ remember: true }}
+                onFinish={onFinishSignup}
+                layout="vertical"
+              >
+                <Form.Item
+                  name="name"
+                  label="Name"
+                  rules={[{ required: true, message: 'Please input your name!' }]}
+                >
+                  <Input
+                    prefix={<UserOutlined />}
+                    placeholder="Name"
+                    name="name"
+                    value={signupForm.name}
+                    onChange={handleSignupChange}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="email"
+                  label="Email"
+                  rules={[{ required: true, message: 'Please input your email!' }]}
+                >
+                  <Input
+                    prefix={<UserOutlined />}
+                    placeholder="Email"
+                    name="email"
+                    value={signupForm.email}
+                    onChange={handleSignupChange}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="password"
+                  label="Password"
+                  rules={[{ required: true, message: 'Please input your password!' }]}
+                >
+                  <Input.Password
+                    prefix={<LockOutlined />}
+                    placeholder="Password"
+                    name="password"
+                    value={signupForm.password}
+                    onChange={handleSignupChange}
+                  />
+                </Form.Item>
+
+                {error && (
+                  <Form.Item>
+                    <p style={{ color: 'red' }}>{error}</p>
+                  </Form.Item>
+                )}
+
+                <Form.Item>
+                  <Button type="primary" htmlType="submit" block loading={loading}>
+                    Sign Up
+                  </Button>
+                </Form.Item>
+              </Form>
+            </TabPane>
+          </Tabs>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Login;

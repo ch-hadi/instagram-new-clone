@@ -70,13 +70,13 @@ const Main = () => {
         />
         <div className="flex-grow overflow-y-auto bg-gray-100">
             {activeView === 'posts' && <Stories stories={stories} />}
-            <div className={`max-w-3xl mx-auto py-8 px-4 space-y-8 ${activeView === 'posts' ? 'mt-24' : ''}`}>
+            <div className={`max-w-fullx ${activeView === 'posts' ? 'mt-24' : ''}`}>
                 {activeView === 'posts' ? (
-                    <>
+                    <div className='py-8'>
                         <InstagramPost />
                         <InstagramPost />
                         <InstagramPost />
-                    </>
+                    </div>
                 ) : (
                     <ChatContainer
                         activeFriend={activeFriend}

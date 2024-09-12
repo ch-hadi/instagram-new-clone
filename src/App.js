@@ -57,7 +57,7 @@ const App = () => {
   return (
     <AuthProvider>
       <SocketProvider>
-        <AppRoutes/>
+        <AppRoutes />
       </SocketProvider>
     </AuthProvider>
   );
